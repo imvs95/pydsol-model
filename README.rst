@@ -1,4 +1,4 @@
-Pydsol-model : Python Distributed Simulation Object Library with Predefined Object
+Pydsol-model : Python Distributed Simulation Object Library with Predefined Objects
 =====================================================
 
 What is pydsol-model?
