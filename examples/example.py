@@ -7,12 +7,12 @@ from pydsol.core.experiment import SingleReplication
 from pydsol.core.model import DSOLModel
 from pydsol.core.simulator import DEVSSimulatorFloat
 
-from entities import Entity
-from source import Source
-from server import Server
-from sink import Sink
-from link import Link
-from entities import Vehicle
+from pydsol.model.entities import Entity
+from pydsol.model.source import Source
+from pydsol.model.server import Server
+from pydsol.model.sink import Sink
+from pydsol.model.link import Link
+from pydsol.model.entities import Vehicle
 
 
 class ExampleModel(DSOLModel):
