@@ -6,9 +6,7 @@ Created on: 22-7-2021 10:20
 import itertools
 import logging
 
-from node import Node
-
-from basic_logger import get_module_logger
+from pydsol.model.basic_logger import get_module_logger
 logger = get_module_logger(__name__)
 
 
@@ -60,9 +58,9 @@ class Sink(object):
         transfer_in_time_dist = self.distribution(
             self.transfer_in_time) if "distribution" in self.__dict__ else self.transfer_in_time
 
-        self.simulator.schedule_event_rel(transfer_in_time_dist, self, "exit_input_node")
+        self.simulator.schedule_event_rel(transfer_in_time_dist, self, "exit_input_node", entity=entity)
 
-    def exit_input_node(self):
+    def exit_input_node(self, entity, **kwargs):
         """Schedules the event to exit the input node and to destroy the entity.
 
         Parameters
@@ -71,9 +69,9 @@ class Sink(object):
             the target on which a state change is scheduled.
 
         """
-        self.simulator.schedule_event_now(self, "destroy_entity")
+        self.simulator.schedule_event_now(self, "destroy_entity", entity=entity)
 
-    def destroy_entity(self):
+    def destroy_entity(self, entity, **kwargs):
         """Destroys the entity.
 
         Parameters
@@ -84,4 +82,4 @@ class Sink(object):
         """
         logger.info("Time {0:.2f}: {1} is destroyed".format(self.simulator.simulator_time, self.processing_entity.name))
         # To reduce number of objects in model
-        del self.processing_entity
+        del entity

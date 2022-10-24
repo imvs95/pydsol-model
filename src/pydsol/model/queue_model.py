@@ -4,7 +4,7 @@ Created on: 6-8-2021 15:38
 @author: IvS
 """
 
-from basic_logger import get_module_logger
+from pydsol.model.basic_logger import get_module_logger
 
 logger = get_module_logger(__name__)
 

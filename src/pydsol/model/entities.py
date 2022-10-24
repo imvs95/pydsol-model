@@ -5,7 +5,7 @@ Created on: 22-7-2021 10:22
 """
 import itertools
 
-from basic_logger import get_module_logger
+from pydsol.model.basic_logger import get_module_logger
 import logging
 
 logger = get_module_logger(__name__)
@@ -53,5 +53,5 @@ class Vehicle(Entity):
         kwargs:
              kwargs are the keyword arguments that are used to expand the vehicle class.
         """
-        super().__init__(simulator, speed, **kwargs)
+        super().__init__(simulator, t=simulator.simulator_time, speed=speed, **kwargs)
         self.entities_on_vehicle = []

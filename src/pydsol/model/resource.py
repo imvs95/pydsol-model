@@ -8,8 +8,8 @@ import itertools
 
 
 import logging
-from basic_logger import get_module_logger
-from entities import Entity
+from pydsol.model.basic_logger import get_module_logger
+from pydsol.model.entities import Entity
 
 logger = get_module_logger(__name__)
 
@@ -97,7 +97,10 @@ class Resource(object):
         """
         processing_time_dist = self.set_processing_time()
 
-        self.simulator.schedule_event_rel(processing_time_dist, self, "exit_resource")
+        if "processing_entity" in kwargs:
+            self.processing_entity = kwargs["processing_entity"]
+
+        self.simulator.schedule_event_rel(processing_time_dist, self, "exit_resource", **kwargs)
 
     def set_processing_time(self):
         """Draws a processing time from the distribution and parameter processing time.
@@ -123,7 +126,7 @@ class Resource(object):
 
         """
         logger.info(
-            "Time {0:.2f}: {1} is processed by {2} of {3}".format(self.simulator.simulator_time, self.processing_entity.name,
+            "Time {0:.2f}: {1} is processed by {2} of {3}".format(self.simulator.simulator_time, self.processing_entity,
                                                                   self.name, self.server.name))
         self.simulator.schedule_event_now(self.server, "enter_output_node", entity=self.processing_entity)
 

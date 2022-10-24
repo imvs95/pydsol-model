@@ -6,14 +6,14 @@ Created on: 5-8-2021 15:10
 import numpy as np
 import itertools
 
-from queue_model import QueueModel
-from resource import Resource
-from entities import Vehicle
+from pydsol.model.queue_model import QueueModel
+from pydsol.model.resource import Resource
+from pydsol.model.entities import Vehicle
 
 import logging
-from basic_logger import get_module_logger_basic
+from pydsol.model.basic_logger import get_module_logger
 
-logger = get_module_logger_basic(__name__)
+logger = get_module_logger(__name__)
 
 
 class Server(object):

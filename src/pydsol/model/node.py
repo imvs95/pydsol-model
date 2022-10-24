@@ -7,8 +7,8 @@ import math
 import numpy as np
 import itertools
 
-from basic_logger import get_module_logger
-from entities import Entity
+from pydsol.model.basic_logger import get_module_logger
+from pydsol.model.entities import Entity
 
 logger = get_module_logger(__name__)
 
