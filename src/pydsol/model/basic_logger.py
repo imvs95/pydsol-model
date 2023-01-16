@@ -7,7 +7,7 @@ import logging
 import sys
 
 
-def get_module_logger(mod_name, level=logging.DEBUG):
+def get_module_logger(mod_name, level=logging.INFO):
     logger = logging.getLogger(mod_name)
     handler = logging.StreamHandler(stream=sys.stdout)
     msg_format = '%(asctime)s [%(levelname)s] %(message)s (%(name)s - %(filename)s: line %(lineno)s)'
@@ -16,4 +16,5 @@ def get_module_logger(mod_name, level=logging.DEBUG):
     handler.setFormatter(formatter)
     logger.addHandler(handler)
     logger.setLevel(level)
+    logger.propagate = False
     return logger
