@@ -4,9 +4,7 @@ Created on: 22-7-2021 13:42
 @author: IvS
 """
 import itertools
-
 from pydsol.model.basic_logger import get_module_logger
-
 logger = get_module_logger(__name__)
 
 
