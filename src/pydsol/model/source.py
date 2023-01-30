@@ -3,13 +3,10 @@ Created on: 22-7-2021 10:19
 
 @author: IvS
 """
-import logging
-
 import numpy as np
 import itertools
 
 from pydsol.model.entities import Entity
-
 from pydsol.model.basic_logger import get_module_logger
 
 logger = get_module_logger(__name__)
@@ -76,7 +73,7 @@ class Source(object):
         # Create new entity
         for _ in range(self.num_entities):
             entity = self.entity_type(self.simulator, self.simulator.simulator_time, **kwargs)
-            logging.info("Time {0:.2f}: {1} is created at {2}".format(self.simulator.simulator_time, entity.name,
+            logger.info("Time {0:.2f}: {1} is created at {2}".format(self.simulator.simulator_time, entity.name,
                                                                       self.name))
             self.exit_source(entity)
 

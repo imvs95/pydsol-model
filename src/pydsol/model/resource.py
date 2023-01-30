@@ -3,11 +3,8 @@ Created on: 9-8-2021 17:02
 
 @author: IvS
 """
-import numpy as np
 import itertools
 
-
-import logging
 from pydsol.model.basic_logger import get_module_logger
 from pydsol.model.entities import Entity
 
@@ -110,7 +107,11 @@ class Resource(object):
         elif isinstance(self.processing_time, (int, float)):
             processing_time_dist = self.distribution(self.processing_time)
         else:
-            processing_time_dist = self.distribution(*self.processing_time)
+            try:
+                processing_time_dist = self.distribution(*self.processing_time)
+            except TypeError:
+                raise "Wrong types for processing time ({1}) and/or distribution ({0}) for scheduling an event".format(
+                    self.processing_time, self.distribution)
         processing_time_dist = max(0, processing_time_dist)
         return processing_time_dist
 

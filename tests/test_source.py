@@ -17,7 +17,9 @@ def test_source_class(mocker):
 
     assert source.simulator == mock_simulator
     assert source.id == 1
+    assert isinstance(source.id, int)
     assert source.name == "Source 1"
+    assert isinstance(source.name, str)
 
     mock_entity_type = mocker.Mock()
     source_2 = Source(mock_simulator, interarrival_time=1, num_entities=3, entity_type=mock_entity_type, name="test",
@@ -74,6 +76,7 @@ def test_enter_output_node(mocker):
     # With vehicle
     source = Source(mock_simulator, vehicle_type=vehicle)
     source.enter_output_node(mock_entity)
+    assert isinstance(source.kwargs["vehicle_type"], object)
 
     # With wrong vehicle unit
     with pytest.raises(TypeError):
