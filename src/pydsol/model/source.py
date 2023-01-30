@@ -77,8 +77,18 @@ class Source(object):
                                                                       self.name))
             self.exit_source(entity)
 
-        interarrival_time = self.distribution(
-            *self.interarrival_time) if "distribution" in self.__dict__ else self.interarrival_time
+        if "distribution" in self.__dict__:
+            try:
+                interarrival_time = self.distribution(*self.interarrival_time)
+            except TypeError:
+                try:
+                    interarrival_time = self.distribution(self.interarrival_time)
+                except TypeError:
+                    raise "Wrong types for transfer in time ({1}) and/or distribution ({0}) for scheduling an event".format(
+                        self.interarrival_time, self.distribution)
+        else:
+            interarrival_time = self.interarrival_time
+
         relative_delay = interarrival_time
 
         # Schedule event to create next entity according to the interarrival time

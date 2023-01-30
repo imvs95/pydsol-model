@@ -48,6 +48,10 @@ def test_create_entities(mocker):
     source = Source(mock_simulator, interarrival_time=1)
     source.create_entities()
 
+    #None-iterable distribution
+    source = Source(mock_simulator, interarrival_time=1, distribution=np.random.normal, num_entities=5)
+    source.create_entities()
+
     # Test with other interarrival time and distribution
     source = Source(mock_simulator, interarrival_time=(0, 1, 2), distribution=np.random.triangular)
     source.create_entities()
@@ -56,9 +60,9 @@ def test_create_entities(mocker):
     source = Source(mock_simulator, interarrival_time=(0, 1, 2), distribution=np.random.triangular, num_entities=5)
     source.create_entities()
 
-    # Test with wrong interarrival time
+    # Not matching distribution and transfer_in_time
     with pytest.raises(TypeError):
-        source = Source(mock_simulator, interarrival_time=(0, 1, 2), distribution=np.random.exponential)
+        source = Source(mock_simulator, interarrival_time=1, distribution=np.random.triangular)
         source.create_entities()
 
 

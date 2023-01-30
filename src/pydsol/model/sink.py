@@ -53,8 +53,17 @@ class Sink(object):
         """
         self.processing_entity = entity
 
-        transfer_in_time_dist = self.distribution(
-            self.transfer_in_time) if "distribution" in self.__dict__ else self.transfer_in_time
+        if "distribution" in self.__dict__:
+            try:
+                transfer_in_time_dist = self.distribution(*self.transfer_in_time)
+            except TypeError:
+                try:
+                    transfer_in_time_dist = self.distribution(self.transfer_in_time)
+                except TypeError:
+                    raise "Wrong types for transfer in time ({1}) and/or distribution ({0}) for scheduling an event".format(
+                        self.transfer_in_time, self.distribution)
+        else:
+            transfer_in_time_dist = self.transfer_in_time
 
         self.simulator.schedule_event_rel(transfer_in_time_dist, self, "exit_input_node", entity=entity)
 
@@ -78,6 +87,6 @@ class Sink(object):
             the target on which a state change is scheduled.
 
         """
-        logger.info("Time {0:.2f}: {1} is destroyed".format(self.simulator.simulator_time, self.processing_entity.name))
+        logger.info("Time {0:.2f}: {1} is destroyed".format(self.simulator.simulator_time, entity.name))
         # To reduce number of objects in model
         del entity
