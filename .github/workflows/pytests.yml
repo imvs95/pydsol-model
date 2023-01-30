@@ -35,4 +35,4 @@ jobs:
         run: |
           pip install pytest
           pip install pytest-cov
-          python -m pytest tests/pydsol/model/
+          python -m pytest tests/
