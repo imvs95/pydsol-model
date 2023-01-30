@@ -32,11 +32,11 @@ def test_vehicle(mocker):
 
     vehicle = Vehicle(mock_simulator)
 
+    assert isinstance(vehicle.entities_on_vehicle, list)
     assert vehicle.speed == 10
     assert len(vehicle.entities_on_vehicle) == 0
 
     vehicle.entities_on_vehicle = ["1", "2", "3"]
-
     assert vehicle.entities_on_vehicle == ["1", "2", "3"]
 
 

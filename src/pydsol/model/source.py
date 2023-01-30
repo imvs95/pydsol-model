@@ -9,8 +9,6 @@ import numpy as np
 import itertools
 
 from pydsol.model.entities import Entity
-from pydsol.model.node import Node
-
 
 from pydsol.model.basic_logger import get_module_logger
 
@@ -43,20 +41,16 @@ class Source(object):
         self.num_entities = num_entities
         self.entity_type = entity_type
 
-        self.next = None #this should be the next process
+        self.next = None  # this should be the next process
 
         self.id = next(self.id_iter)
         self.name = "{0} {1}".format(self.__class__.__name__, str(self.id))
         if "name" in kwargs:
             self.name = kwargs["name"]
 
-        self.output_links = []
-
         self.interarrival_time = interarrival_time
         if "distribution" in kwargs:
             self.distribution = kwargs["distribution"]
-
-        self.output_node = Node(self.simulator)
 
         self.kwargs = kwargs
 
@@ -83,17 +77,15 @@ class Source(object):
         for _ in range(self.num_entities):
             entity = self.entity_type(self.simulator, self.simulator.simulator_time, **kwargs)
             logging.info("Time {0:.2f}: {1} is created at {2}".format(self.simulator.simulator_time, entity.name,
-                                                                     self.name))
-
+                                                                      self.name))
             self.exit_source(entity)
 
         interarrival_time = self.distribution(
-            self.interarrival_time) if "distribution" in self.__dict__ else self.interarrival_time
+            *self.interarrival_time) if "distribution" in self.__dict__ else self.interarrival_time
         relative_delay = interarrival_time
 
         # Schedule event to create next entity according to the interarrival time
         self.simulator.schedule_event_rel(relative_delay, self, "create_entities")
-
 
     def exit_source(self, entity, **kwargs):
         """Schedules the event to exit the source and enter the output node.
@@ -131,7 +123,7 @@ class Source(object):
                 vehicle = self.kwargs["vehicle_type"](self.simulator)
             vehicle.entities_on_vehicle.append(entity)
             logger.info("Time {0:.2f}: {1} loaded on {2}".format(self.simulator.simulator_time, entity.name,
-            vehicle.name))
+                                                                 vehicle.name))
             entity = vehicle
 
         self.simulator.schedule_event_now(self, "exit_output_node", entity=entity)
@@ -148,10 +140,8 @@ class Source(object):
             kwargs are the keyword arguments that are used to expand the function.
 
         """
-        #logger.debug("Time {0:.2f}: Exit Source of {1}".format(self.simulator.simulator_time, entity.name))
-
         try:
-            #Selection based on weights in links
+            # Selection based on weights in links
             next_list = self.next if isinstance(self.next, list) else [self.next]
             weights = [link.selection_weight for link in next_list]
             link_by_weight = np.random.choice(np.array(next_list), p=weights / np.sum(weights))
@@ -165,10 +155,3 @@ class Source(object):
                     self.next.enter_input_node(entity)
             except AttributeError:
                 raise AttributeError("{0} has no next process assigned".format(self.name))
-
-
-
-
-
-
-

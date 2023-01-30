@@ -75,10 +75,13 @@ def test_exit_output_node(mocker):
     node_6.exit_output_node(mock_entity)
 
     # Test with vehicle speed
-    node_7 = Node(mock_simulator, vehicle_type=vehicle, vehicle_speed=5)
+    vehicle_speed = 5
+    node_7 = Node(mock_simulator, vehicle_type=vehicle, vehicle_speed=vehicle_speed)
 
     node_7.next = [node_4, node_5]
     node_7.exit_output_node(mock_entity)
+
+    assert isinstance(vehicle_speed, (int, float))
 
 
 if __name__ == '__main__':

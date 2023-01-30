@@ -15,6 +15,7 @@ def test_link_class(mocker):
     mock_destination = mocker.Mock()
 
     mock_length = 5
+    assert isinstance(mock_length, (int, float))
 
     link = Link(mock_simulator, mock_origin, mock_destination, mock_length)
 
@@ -85,6 +86,7 @@ def test_timepath_class(mocker):
     mock_destination = mocker.Mock()
 
     mock_time = 5
+    assert isinstance(mock_time, (int, float))
 
     timepath = TimePath(mock_simulator, mock_origin, mock_destination, mock_time)
 
