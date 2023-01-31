@@ -10,3 +10,7 @@ What is pydsol-model?
 
 
 
+
+License
+=====================================================
+This repository is licensed under BSD 3-Clause License. See ``LICENSE``.
