@@ -7,7 +7,7 @@ HERE = pathlib.Path(__file__).parent
 REQUIREMENTS = (HERE / "requirements.txt").read_text().splitlines()
 
 # The text of the README file
-README = (HERE / "README.md").read_text()
+README = (HERE / "README.rst").read_text()
 
 setup(
     name="pydsol-model",
