@@ -15,6 +15,7 @@ setup(
     description=open("README.md").read(),
     author="Isabelle M. van Schilt",
     url="https://github.com/imvs95/pydsol-model",
-    packages=find_packages(),
+    packages=["pydsol"],
+    package_dir={{'pydsol': 'src/pydsol'}},
     install_requires=REQUIREMENTS
 )
