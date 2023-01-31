@@ -7,6 +7,8 @@ import itertools
 from pydsol.model.basic_logger import get_module_logger
 logger = get_module_logger(__name__)
 
+__all__ = ["Sink"]
+
 
 class Sink(object):
     """This class defines a sink for a discrete event simulation model. A Sink is the end-station of an entity,

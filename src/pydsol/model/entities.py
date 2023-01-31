@@ -7,6 +7,7 @@ import itertools
 from pydsol.model.basic_logger import get_module_logger
 logger = get_module_logger(__name__)
 
+__all__ = ["Entity", "Vehicle"]
 
 class Entity(object):
     """This class defines a basic entity for a discrete event simulation model."""

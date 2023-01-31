@@ -5,7 +5,10 @@ Created on: 22-7-2021 13:42
 """
 import itertools
 from pydsol.model.basic_logger import get_module_logger
+
 logger = get_module_logger(__name__)
+
+__all__ = ["Link", "TimePath"]
 
 
 class Link(object):
@@ -40,7 +43,6 @@ class Link(object):
 
         self.next = None  # is next item
 
-        # TODO origin and destination are optional. Not necessary for modelling
         self.origin = origin
         self.destination = destination
 
@@ -119,7 +121,6 @@ class TimePath(object):
 
         self.next = None  # is next item
 
-        # TODO origin and destination are optional. Not necessary for modelling
         self.origin = origin
         self.destination = destination
 

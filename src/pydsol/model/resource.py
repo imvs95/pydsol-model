@@ -10,6 +10,8 @@ from pydsol.model.entities import Entity
 
 logger = get_module_logger(__name__)
 
+__all__ = ["Resource"]
+
 
 class Resource(object):
     """This class defines a basic resource for a discrete event simulation. An object (often an entity) can seize

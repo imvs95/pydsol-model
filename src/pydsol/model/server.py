@@ -14,6 +14,8 @@ from pydsol.model.basic_logger import get_module_logger
 
 logger = get_module_logger(__name__)
 
+__all__ = ["Server"]
+
 
 class Server(object):
     """This class defines a basic server for a discrete event simulation. It includes input nodes, input queue,

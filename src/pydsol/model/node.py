@@ -12,6 +12,8 @@ from pydsol.model.entities import Entity
 
 logger = get_module_logger(__name__)
 
+__all__ = ["Node"]
+
 
 class Node(object):
     """This class defines a basic node for travelling in a discrete event simulation model. Input and output links

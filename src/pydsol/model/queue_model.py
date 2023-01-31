@@ -8,6 +8,7 @@ from pydsol.model.basic_logger import get_module_logger
 
 logger = get_module_logger(__name__)
 
+__all__ = ["QueueModel"]
 
 class QueueModel(object):
     """This class defines a basic queue attached to a specific object for a discrete event simulation model,

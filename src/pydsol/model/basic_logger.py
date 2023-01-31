@@ -6,6 +6,7 @@ Created on: 25-6-2021 14:43
 import logging
 import sys
 
+__all__ = ["get_module_logger"]
 
 def get_module_logger(mod_name, level=logging.INFO):
     logger = logging.getLogger(mod_name)
