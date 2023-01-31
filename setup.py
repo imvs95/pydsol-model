@@ -12,7 +12,7 @@ README = (HERE / "README.rst").read_text()
 setup(
     name="pydsol-model",
     version="1.0",
-    description=open("README.md").read(),
+    description=open("README.rst").read(),
     author="Isabelle M. van Schilt",
     url="https://github.com/imvs95/pydsol-model",
     packages=["pydsol"],
