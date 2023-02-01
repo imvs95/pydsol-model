@@ -95,7 +95,11 @@
 <p class="caption" role="heading"><span class="caption-text">Examples:</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="basic_example.html">Basic Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="complex_example.html">Complex Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced_example.html">Advanced Examples</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Code Documentation:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="modules.html">pydsol-model</a></li>
 </ul>
 
             
@@ -165,6 +169,25 @@
             
   <section id="overview">
 <h1>Overview<a class="headerlink" href="#overview" title="Permalink to this heading">¶</a></h1>
+<p>pydsol-model provides a set of predefined model objects to construct and run a discrete event simulation model.
+Discrete event simulation models are event-based, meaning that events within a simulation model are executed from event to event that can vary in time.
+No fixed time for a event is scheduled; this happens for agent-based simulation models (ticks) and system dynamics. Discrete event simulation models
+have a continuous simulation time. This is important for understanding the code of the model object. Each step within a model object is, therefore, scheduled using an event
+instead of passing it on to the next function (which often happens in Python).</p>
+<p>The following model objects are provided:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>model objects
+├── Entity
+|   └── Vehicle
+├── Source
+├── Server
+├── Resource
+├── Queue
+├── Sink
+├── Link
+|   └── TimePath
+└── Node
+</pre></div>
+</div>
 </section>
 
 

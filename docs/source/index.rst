@@ -27,14 +27,13 @@ Source code is available at https://github.com/imvs95/pydsol-model.
    :caption: Examples:
 
    ./basic_example.rst
-   ./complex_example.rst
+   ./advanced_example.rst
 
 .. toctree::
    :maxdepth: 2
-   :caption: Documentation of Code:
+   :caption: Code Documentation:
 
-    ./modules.rst
-
+   ./modules.rst
 
 
 Indices and tables

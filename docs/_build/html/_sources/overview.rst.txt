@@ -2,3 +2,22 @@
 Overview
 ===============
 
+pydsol-model provides a set of predefined model objects to construct and run a discrete event simulation model.
+Discrete event simulation models are event-based, meaning that events within a simulation model are executed from event to event that can vary in time.
+No fixed time for a event is scheduled; this happens for agent-based simulation models (ticks) and system dynamics. Discrete event simulation models
+have a continuous simulation time. This is important for understanding the code of the model object. Each step within a model object is, therefore, scheduled using an event
+instead of passing it on to the next function (which often happens in Python).
+
+The following model objects are provided::
+
+    model objects
+    ├── Entity
+    |   └── Vehicle
+    ├── Source
+    ├── Server
+    ├── Resource
+    ├── Queue
+    ├── Sink
+    ├── Link
+    |   └── TimePath
+    └── Node
