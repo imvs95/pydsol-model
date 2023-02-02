@@ -3,7 +3,7 @@ Created on: 2-2-2023 15:34
 
 @author: IvS
 
-Discrete event simulation model with units km and hours
+Discrete event simulation model with units km and days
 """
 import copy
 import numpy as np
