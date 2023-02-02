@@ -9,7 +9,7 @@ This repository is currently under development at Delft University of Technology
 
 Documentation
 =====================================================
-Documentation for pydsol-model is available at ... . This includes the description of the theory behind each model object, and a step-by-step explanation of a simple and more complex example. 
+Documentation for pydsol-model is available at `Read the Docs <https://pydsol-model.readthedocs.io/en/latest/index.html>`_. This includes the description of the theory behind each model object, and a step-by-step explanation of a basic and more advanced example. 
 
 
 Installation and set-up
