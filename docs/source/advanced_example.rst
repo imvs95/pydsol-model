@@ -8,3 +8,11 @@ Example can be found at ``./examples/advanced_example.py``.
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Step-by-Step Tutorial
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Extensions
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+* Hourly statistics using a Timer
+* Extensions using networkx to create a graph and automatically create a simulation model

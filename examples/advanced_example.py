@@ -138,7 +138,7 @@ class Warehouse(Server):
         return copies
 
     def enter_output_node(self, entity, **kwargs):
-        #List of products due to dividing
+        # List of products due to dividing
         for batch in entity:
             super().enter_output_node(batch, **kwargs)
 
@@ -243,12 +243,12 @@ class AdvancedExampleModel(DSOLModel):
 
 
 if __name__ == "__main__":
-    #Input
+    # Input
     NUM_REPLICATIONS = 10
-    RUN_TIME = 364 #days
+    RUN_TIME = 364  # days
     INPUT_PARAMS = {"interarrival_time": 1.5}
 
-    #Experiment
+    # Experiment
     experiment_output = {}
     for rep in range(NUM_REPLICATIONS):
         simulator = DEVSSimulatorFloat("sim")
