@@ -1,3 +1,4 @@
+""" """
 """
 Created on: 6-8-2021 15:38
 
@@ -11,7 +12,7 @@ logger = get_module_logger(__name__)
 __all__ = ["QueueModel"]
 
 class QueueModel(object):
-    """This class defines a basic queue attached to a specific object for a discrete event simulation model,
+    """This class defines a basic queue  to a specific object for a discrete event simulation model,
     and keeps track of the objects in the queue with a contents list."""
     def __init__(self, attached_to):
         """

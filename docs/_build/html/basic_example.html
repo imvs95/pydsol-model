@@ -94,7 +94,11 @@
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Examples:</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Basic Examples</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Basic Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#step-by-step-tutorial">Step-by-Step Tutorial</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#extensions">Extensions</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="advanced_example.html">Advanced Examples</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Code Documentation:</span></p>
@@ -169,6 +173,225 @@
             
   <section id="basic-examples">
 <h1>Basic Examples<a class="headerlink" href="#basic-examples" title="Permalink to this heading">¶</a></h1>
+<p>This is a step-by-step tutorial on how to develop a basic discrete event simulation model using pydsol-model.
+Example can be found at <code class="docutils literal notranslate"><span class="pre">./examples/basic_example.py</span></code>.</p>
+<section id="step-by-step-tutorial">
+<h2>Step-by-Step Tutorial<a class="headerlink" href="#step-by-step-tutorial" title="Permalink to this heading">¶</a></h2>
+<p>We want to create a basic discrete event simulation model with one source, one server, one sink with entities passing
+through the model, using links with distance of 1. See conceptualization of the simulation model in the figure below.</p>
+<a class="reference internal image-reference" href="_images/figure_1_basic_example.jpg"><img alt="alternate text" class="align-center" src="_images/figure_1_basic_example.jpg" style="width: 550px; height: 200px;" /></a>
+<p>Start with creating a new <code class="docutils literal notranslate"><span class="pre">DSOLModel</span></code> class for this basic example.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pydsol.core.model</span> <span class="kn">import</span> <span class="n">DSOLModel</span>
+
+<span class="k">class</span> <span class="nc">BasicExampleModel</span><span class="p">(</span><span class="n">DSOLModel</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simulator</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">simulator</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">construct_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+       <span class="c1"># add model objects</span>
+</pre></div>
+</div>
+<p>Then, add the model objects that we want in our simulation model as following:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pydsol.core.model</span> <span class="kn">import</span> <span class="n">DSOLModel</span>
+
+<span class="kn">from</span> <span class="nn">pydsol.model.source</span> <span class="kn">import</span> <span class="n">Source</span>
+<span class="kn">from</span> <span class="nn">pydsol.model.server</span> <span class="kn">import</span> <span class="n">Server</span>
+<span class="kn">from</span> <span class="nn">pydsol.model.sink</span> <span class="kn">import</span> <span class="n">Sink</span>
+<span class="kn">from</span> <span class="nn">pydsol.model.link</span> <span class="kn">import</span> <span class="n">Link</span>
+
+<span class="k">class</span> <span class="nc">BasicExampleModel</span><span class="p">(</span><span class="n">DSOLModel</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simulator</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">simulator</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">construct_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Create model</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="n">Source</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">)</span>
+        <span class="n">server</span> <span class="o">=</span> <span class="n">Server</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">)</span>
+        <span class="n">sink</span> <span class="o">=</span> <span class="n">Sink</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">)</span>
+
+        <span class="n">link_1</span> <span class="o">=</span> <span class="n">Link</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">link_2</span> <span class="o">=</span> <span class="n">Link</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="n">sink</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For all the model objects, the default values are used. Note that Source creates entities of type <code class="docutils literal notranslate"><span class="pre">Entity</span></code> by default.</p>
+<p>Next, the structure of the model components needs to be set - so how are the entities flowing through the model? This is done
+using the attribute <em>next</em>. This attribute defines what the next model object is. A <em>next</em> needs to be defined for each model object
+expect for the Sink.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pydsol.core.model</span> <span class="kn">import</span> <span class="n">DSOLModel</span>
+
+<span class="kn">from</span> <span class="nn">pydsol.model.source</span> <span class="kn">import</span> <span class="n">Source</span>
+<span class="kn">from</span> <span class="nn">pydsol.model.server</span> <span class="kn">import</span> <span class="n">Server</span>
+<span class="kn">from</span> <span class="nn">pydsol.model.sink</span> <span class="kn">import</span> <span class="n">Sink</span>
+<span class="kn">from</span> <span class="nn">pydsol.model.link</span> <span class="kn">import</span> <span class="n">Link</span>
+
+<span class="k">class</span> <span class="nc">BasicExampleModel</span><span class="p">(</span><span class="n">DSOLModel</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simulator</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">simulator</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">construct_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># Create model</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="n">Source</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">)</span>
+        <span class="n">server</span> <span class="o">=</span> <span class="n">Server</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">)</span>
+        <span class="n">sink</span> <span class="o">=</span> <span class="n">Sink</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">)</span>
+
+        <span class="n">link_1</span> <span class="o">=</span> <span class="n">Link</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">link_2</span> <span class="o">=</span> <span class="n">Link</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="n">sink</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Set structure</span>
+        <span class="n">source</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">link_1</span>
+        <span class="n">link_1</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">server</span>
+        <span class="n">server</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">link_2</span>
+        <span class="n">link_2</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">sink</span>
+</pre></div>
+</div>
+<p>The simulation model is now finished and ready to run. For running, <code class="docutils literal notranslate"><span class="pre">pydsol-core</span></code> is used. Running the model for one
+replication with a start time of 0, no warm-up time, and a run time of 100. This results in the following code:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pydsol.core.experiment</span> <span class="kn">import</span> <span class="n">SingleReplication</span>
+<span class="kn">from</span> <span class="nn">pydsol.core.model</span> <span class="kn">import</span> <span class="n">DSOLModel</span>
+<span class="kn">from</span> <span class="nn">pydsol.core.simulator</span> <span class="kn">import</span> <span class="n">DEVSSimulatorFloat</span>
+
+<span class="kn">from</span> <span class="nn">pydsol.model.source</span> <span class="kn">import</span> <span class="n">Source</span>
+<span class="kn">from</span> <span class="nn">pydsol.model.server</span> <span class="kn">import</span> <span class="n">Server</span>
+<span class="kn">from</span> <span class="nn">pydsol.model.sink</span> <span class="kn">import</span> <span class="n">Sink</span>
+<span class="kn">from</span> <span class="nn">pydsol.model.link</span> <span class="kn">import</span> <span class="n">Link</span>
+
+
+<span class="k">class</span> <span class="nc">BasicExampleModel</span><span class="p">(</span><span class="n">DSOLModel</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simulator</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">simulator</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">construct_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Replication starts...&quot;</span><span class="p">)</span>
+        <span class="c1"># Create model</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="n">Source</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">)</span>
+        <span class="n">server</span> <span class="o">=</span> <span class="n">Server</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">)</span>
+        <span class="n">sink</span> <span class="o">=</span> <span class="n">Sink</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">)</span>
+
+        <span class="n">link_1</span> <span class="o">=</span> <span class="n">Link</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">link_2</span> <span class="o">=</span> <span class="n">Link</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="n">sink</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Set structure</span>
+        <span class="n">source</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">link_1</span>
+        <span class="n">link_1</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">server</span>
+        <span class="n">server</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">link_2</span>
+        <span class="n">link_2</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">sink</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">simulator</span> <span class="o">=</span> <span class="n">DEVSSimulatorFloat</span><span class="p">(</span><span class="s2">&quot;sim&quot;</span><span class="p">)</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">BasicExampleModel</span><span class="p">(</span><span class="n">simulator</span><span class="p">)</span>
+    <span class="n">replication</span> <span class="o">=</span> <span class="n">SingleReplication</span><span class="p">(</span><span class="s2">&quot;rep1&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+    <span class="n">simulator</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">replication</span><span class="p">)</span>
+    <span class="n">simulator</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="extensions">
+<h2>Extensions<a class="headerlink" href="#extensions" title="Permalink to this heading">¶</a></h2>
+<p>An example for extending or modifying a basic discrete event simulation models (in <code class="docutils literal notranslate"><span class="pre">def</span> <span class="pre">construct_model</span></code>) is to give
+your own input to the interarrival times, processing times, and distribution to each model station. For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">construct_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Replication starts...&quot;</span><span class="p">)</span>
+    <span class="c1"># Create model</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="n">Source</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">interarrival_time</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+    <span class="n">server</span> <span class="o">=</span> <span class="n">Server</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">processing_time</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">sink</span> <span class="o">=</span> <span class="n">Sink</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">)</span>
+
+    <span class="n">link_1</span> <span class="o">=</span> <span class="n">Link</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">link_2</span> <span class="o">=</span> <span class="n">Link</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="n">sink</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Set structure</span>
+    <span class="n">source</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">link_1</span>
+    <span class="n">link_1</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">server</span>
+    <span class="n">server</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">link_2</span>
+    <span class="n">link_2</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">sink</span>
+</pre></div>
+</div>
+<p>Also, you can customize the names of each model objects. For example, naming the links:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">construct_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Replication starts...&quot;</span><span class="p">)</span>
+    <span class="c1"># Create model</span>
+    <span class="n">source</span> <span class="o">=</span> <span class="n">Source</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">interarrival_time</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+    <span class="n">server</span> <span class="o">=</span> <span class="n">Server</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">processing_time</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+    <span class="n">sink</span> <span class="o">=</span> <span class="n">Sink</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">)</span>
+
+    <span class="n">link_1</span> <span class="o">=</span> <span class="n">Link</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Link 1.0&quot;</span><span class="p">)</span>
+    <span class="n">link_2</span> <span class="o">=</span> <span class="n">Link</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="n">sink</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Link 2.0&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Set structure</span>
+    <span class="n">source</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">link_1</span>
+    <span class="n">link_1</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">server</span>
+    <span class="n">server</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">link_2</span>
+    <span class="n">link_2</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">sink</span>
+</pre></div>
+</div>
+<p>If entities should be carried by a <code class="docutils literal notranslate"><span class="pre">Vehicle</span></code> from, for example, the source to the server, add the vehicle type to the
+Source object. Also, to make sure that the Source actually uses <code class="docutils literal notranslate"><span class="pre">Entity</span></code> as entity type, we add this attribute
+to the Source object like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pydsol.model.entities</span> <span class="kn">import</span> <span class="n">Entity</span><span class="p">,</span> <span class="n">Vehicle</span>
+
+            <span class="k">def</span> <span class="nf">construct_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+                <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Replication starts...&quot;</span><span class="p">)</span>
+                <span class="c1"># Create model</span>
+                <span class="n">source</span> <span class="o">=</span> <span class="n">Source</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">interarrival_time</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">vehicle_type</span><span class="o">=</span><span class="n">Vehicle</span><span class="p">,</span>
+                                <span class="n">entity_type</span> <span class="o">=</span> <span class="n">Entity</span><span class="p">)</span>
+                <span class="n">server</span> <span class="o">=</span> <span class="n">Server</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">processing_time</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+                <span class="n">sink</span> <span class="o">=</span> <span class="n">Sink</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">)</span>
+
+                <span class="n">link_1</span> <span class="o">=</span> <span class="n">Link</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Link 1.0&quot;</span><span class="p">)</span>
+                <span class="n">link_2</span> <span class="o">=</span> <span class="n">Link</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="n">sink</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Link 2.0&quot;</span><span class="p">)</span>
+
+                <span class="c1"># Set structure</span>
+                <span class="n">source</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">link_1</span>
+                <span class="n">link_1</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">server</span>
+                <span class="n">server</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">link_2</span>
+                <span class="n">link_2</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">sink</span>
+</pre></div>
+</div>
+<p>Another example to extend the basic simulation model is to add another link from the source to the server.
+This is combined with all the other customizations and extensions, and gives the code as below. This code is  also available at <code class="docutils literal notranslate"><span class="pre">./examples/extended_basic_example.py</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">pydsol.core.experiment</span> <span class="kn">import</span> <span class="n">SingleReplication</span>
+<span class="kn">from</span> <span class="nn">pydsol.core.model</span> <span class="kn">import</span> <span class="n">DSOLModel</span>
+<span class="kn">from</span> <span class="nn">pydsol.core.simulator</span> <span class="kn">import</span> <span class="n">DEVSSimulatorFloat</span>
+
+<span class="kn">from</span> <span class="nn">pydsol.model.entities</span> <span class="kn">import</span> <span class="n">Entity</span><span class="p">,</span> <span class="n">Vehicle</span>
+<span class="kn">from</span> <span class="nn">pydsol.model.source</span> <span class="kn">import</span> <span class="n">Source</span>
+<span class="kn">from</span> <span class="nn">pydsol.model.server</span> <span class="kn">import</span> <span class="n">Server</span>
+<span class="kn">from</span> <span class="nn">pydsol.model.sink</span> <span class="kn">import</span> <span class="n">Sink</span>
+<span class="kn">from</span> <span class="nn">pydsol.model.link</span> <span class="kn">import</span> <span class="n">Link</span>
+
+
+<span class="k">class</span> <span class="nc">BasicExampleModel</span><span class="p">(</span><span class="n">DSOLModel</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simulator</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">simulator</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">construct_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Replication starts...&quot;</span><span class="p">)</span>
+        <span class="c1"># Create model</span>
+        <span class="n">source</span> <span class="o">=</span> <span class="n">Source</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">entity_type</span><span class="o">=</span><span class="n">Entity</span><span class="p">,</span> <span class="n">vehicle_type</span><span class="o">=</span><span class="n">Vehicle</span><span class="p">)</span>
+        <span class="n">server</span> <span class="o">=</span> <span class="n">Server</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">processing_time</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+        <span class="n">sink</span> <span class="o">=</span> <span class="n">Sink</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">)</span>
+
+        <span class="n">link_1</span> <span class="o">=</span> <span class="n">Link</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Link 1.0&quot;</span><span class="p">)</span>
+        <span class="n">link_11</span> <span class="o">=</span> <span class="n">Link</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Link 1.1&quot;</span><span class="p">)</span>
+        <span class="n">link_2</span> <span class="o">=</span> <span class="n">Link</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">server</span><span class="p">,</span> <span class="n">sink</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Link 2.0&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Set structure</span>
+        <span class="n">source</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="p">[</span><span class="n">link_1</span><span class="p">,</span> <span class="n">link_11</span><span class="p">]</span>
+        <span class="n">link_1</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">link_11</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">server</span>
+
+        <span class="n">server</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">link_2</span>
+        <span class="n">link_2</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">sink</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">simulator</span> <span class="o">=</span> <span class="n">DEVSSimulatorFloat</span><span class="p">(</span><span class="s2">&quot;sim&quot;</span><span class="p">)</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">BasicExampleModel</span><span class="p">(</span><span class="n">simulator</span><span class="p">)</span>
+    <span class="n">replication</span> <span class="o">=</span> <span class="n">SingleReplication</span><span class="p">(</span><span class="s2">&quot;rep1&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+    <span class="n">simulator</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">replication</span><span class="p">)</span>
+    <span class="n">simulator</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
 </section>
 
 

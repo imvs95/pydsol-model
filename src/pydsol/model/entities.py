@@ -1,3 +1,4 @@
+""" """
 """
 Created on: 22-7-2021 10:22
 
@@ -5,9 +6,11 @@ Created on: 22-7-2021 10:22
 """
 import itertools
 from pydsol.model.basic_logger import get_module_logger
+
 logger = get_module_logger(__name__)
 
 __all__ = ["Entity", "Vehicle"]
+
 
 class Entity(object):
     """This class defines a basic entity for a discrete event simulation model."""
@@ -39,6 +42,7 @@ class Entity(object):
 class Vehicle(Entity):
     """This class defines a vehicle in a discrete event simulation model, and is a subclass of Entity. A vehicle is an
     entity of which other entities can be transported. The entities on the vehicle are tracked by a list."""
+
     def __init__(self, simulator, speed=10, **kwargs):
         """
 

@@ -163,16 +163,19 @@
            <div itemprop="articleBody">
             
   <h1>Source code for pydsol.model.entities</h1><div class="highlight"><pre>
-<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span></span><span class="sd">&quot;&quot;&quot; &quot;&quot;&quot;</span>
+<span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Created on: 22-7-2021 10:22</span>
 
 <span class="sd">@author: IvS</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">itertools</span>
 <span class="kn">from</span> <span class="nn">pydsol.model.basic_logger</span> <span class="kn">import</span> <span class="n">get_module_logger</span>
+
 <span class="n">logger</span> <span class="o">=</span> <span class="n">get_module_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Entity&quot;</span><span class="p">,</span> <span class="s2">&quot;Vehicle&quot;</span><span class="p">]</span>
+
 
 <div class="viewcode-block" id="Entity"><a class="viewcode-back" href="../../../model.html#pydsol.model.entities.Entity">[docs]</a><span class="k">class</span> <span class="nc">Entity</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;This class defines a basic entity for a discrete event simulation model.&quot;&quot;&quot;</span>
@@ -204,6 +207,7 @@
 <div class="viewcode-block" id="Vehicle"><a class="viewcode-back" href="../../../model.html#pydsol.model.entities.Vehicle">[docs]</a><span class="k">class</span> <span class="nc">Vehicle</span><span class="p">(</span><span class="n">Entity</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;This class defines a vehicle in a discrete event simulation model, and is a subclass of Entity. A vehicle is an</span>
 <span class="sd">    entity of which other entities can be transported. The entities on the vehicle are tracked by a list.&quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simulator</span><span class="p">,</span> <span class="n">speed</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 

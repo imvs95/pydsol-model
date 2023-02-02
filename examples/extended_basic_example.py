@@ -7,15 +7,14 @@ from pydsol.core.experiment import SingleReplication
 from pydsol.core.model import DSOLModel
 from pydsol.core.simulator import DEVSSimulatorFloat
 
-from pydsol.model.entities import Entity
+from pydsol.model.entities import Entity, Vehicle
 from pydsol.model.source import Source
 from pydsol.model.server import Server
 from pydsol.model.sink import Sink
 from pydsol.model.link import Link
-from pydsol.model.entities import Vehicle
 
 
-class ExampleModel(DSOLModel):
+class BasicExampleModel(DSOLModel):
     def __init__(self, simulator):
         super().__init__(simulator)
 
@@ -26,10 +25,11 @@ class ExampleModel(DSOLModel):
         server = Server(self.simulator, processing_time=1, distribution=None)
         sink = Sink(self.simulator)
 
-        link_1 = Link(self.simulator, source, server, 1, name="Link 10")
-        link_11 = Link(self.simulator, source, server, 1, name="Link 11")
-        link_2 = Link(self.simulator, server, sink, 1, name="Link 2")
+        link_1 = Link(self.simulator, source, server, 1, name="Link 1.0")
+        link_11 = Link(self.simulator, source, server, 1, name="Link 1.1")
+        link_2 = Link(self.simulator, server, sink, 1, name="Link 2.0")
 
+        # Set structure
         source.next = [link_1, link_11]
         link_1.next = link_11.next = server
 
@@ -39,7 +39,7 @@ class ExampleModel(DSOLModel):
 
 if __name__ == "__main__":
     simulator = DEVSSimulatorFloat("sim")
-    model = ExampleModel(simulator)
+    model = BasicExampleModel(simulator)
     replication = SingleReplication("rep1", 0.0, 0.0, 100)
     simulator.initialize(model, replication)
     simulator.start()

@@ -1,3 +1,4 @@
+""" """
 """
 Created on: 23-7-2021 16:00
 
@@ -72,7 +73,7 @@ class Node(object):
             entity = vehicle
 
         try:
-            #Selection based on weights in links
+            # Selection based on weights in links
             next_list = self.next if isinstance(self.next, list) else [self.next]
             weights = [link.selection_weight for link in next_list]
             link_by_weight = np.random.choice(np.array(next_list), p=weights / np.sum(weights))

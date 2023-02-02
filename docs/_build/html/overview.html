@@ -89,7 +89,11 @@
             
               <p class="caption" role="heading"><span class="caption-text">Getting Started:</span></p>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Overview</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#model-objects">Model Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#event-scheduling">Event Scheduling</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 </ul>
 <p class="caption" role="heading"><span class="caption-text">Examples:</span></p>
@@ -174,20 +178,88 @@ Discrete event simulation models are event-based, meaning that events within a s
 No fixed time for a event is scheduled; this happens for agent-based simulation models (ticks) and system dynamics. Discrete event simulation models
 have a continuous simulation time. This is important for understanding the code of the model object. Each step within a model object is, therefore, scheduled using an event
 instead of passing it on to the next function (which often happens in Python).</p>
-<p>The following model objects are provided:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>model objects
-├── Entity
-|   └── Vehicle
-├── Source
-├── Server
-├── Resource
-├── Queue
-├── Sink
-├── Link
-|   └── TimePath
-└── Node
+<section id="model-objects">
+<h2>Model Objects<a class="headerlink" href="#model-objects" title="Permalink to this heading">¶</a></h2>
+<p>The model objects are provided in the following structure of .py files:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>pydsol
+    └── model
+        ├── basic_logger.py
+        ├── entities.py
+        |     └── Entity
+        |          └── Vehicle
+        ├── link.py
+        |     ├── Link
+        |     └── TimePath
+        ├── node.py
+        |     └── Node
+        ├── queue_model.py
+        |     └── QueueModel
+        ├── resource.py
+        |     └── Resource
+        ├── server.py
+        |     └── Server
+        ├── sink.py
+        |     └── Sink
+        └── source.py
+              └── Source
 </pre></div>
 </div>
+<p><strong>Entity</strong> are the discrete items of interest flowing through the discrete event simulation model. They can pass through any model object such as
+the queues, resources, servers etc. Entities can be persons, products, messages or any items of interest. Entities have attributes
+that keeps data on a specific entity.</p>
+<p><strong>Vehicle</strong> is a special type of <strong>Entity</strong>. This is an entity that can also pass through the model, but is only used to carry
+other entities over the <strong>Link</strong> or <strong>TimePath</strong>. Thus, a vehicle carries a batch of entities from origin to destination.
+Vehicle has the attribute <em>entities_on_vehicle</em> to keep track of which entities the vehicle carries. At the output node of the origin
+station, the entities are loaded on the vehicle. At the input node of the destination station, the entities are loaded off the vehicle.</p>
+<p><strong>Link</strong> connects the various stations/model elements to ensure the flow of entities. A link has a specific distance between origin and destination. Based on the (stochastic) speed of the entity, the time from
+the origin station to destination for each entity is calculated, and an event for travelling the link is scheduled.</p>
+<p><strong>TimePath</strong> also connects the various stations/model element to ensure the flow of entities, but based on time. A time path has a specific time between
+origin and destination. Based on this time, an event for travelling the path is scheduled.</p>
+<p><strong>Node</strong> is a basic travel node where entities flow through. A node has an input and output flow of entities. No processing time
+is required for the node.</p>
+<p><strong>QueueModel</strong> is a basic queue attached to a specific model element or station. It keeps track of the entities in the queue
+using a <em>contents</em> list attribute. This queue can be attached to any model element or station using the attribute <em>attached_to</em>.
+Based on the sequence of adding and removing entities in the <em>contents</em> list, the queueing rule is defined (e.g., First-In First-Out,
+Last-In First-Out etc.)</p>
+<p><strong>Resource</strong> is a processing station where entities can flow through. Resources can be seized and released by entities in the system. If the resource is seized by an entity, other
+entities cannot seize it until it is released (e.g., after a certain processing time). Remaining entities are queued in a <strong>QueueModel</strong>.
+This resource requires a processing time for each entity. Resources can represent, for example, supplies, machines, ports, stores.</p>
+<p><strong>Server</strong> is multiple <strong>Resources</strong> combined with a <strong>Queue</strong>. Server is also a processing station where entities flow through, so it has an input and output flow of entities.
+It uses the resources to process the entities, based on an user-based (stochastic) processing time. The capacity of the server, i.e.,
+how many resources the server has, is set by the attribute <em>capacity</em>.</p>
+<p><strong>Sink</strong> is a station that destroys entities. Sink only has an input flow of entities. At least, one sink is needed in a simulation model, else the number of entities in the model becomes too large for running experiments.</p>
+<p><strong>Source</strong> is a station that creates entities. Depending on the interarrival time, a new batch of entities is created, and exit the source.
+Source only has an output flow of entities. At least, one source is needed in a simulation model.</p>
+</section>
+<section id="event-scheduling">
+<h2>Event Scheduling<a class="headerlink" href="#event-scheduling" title="Permalink to this heading">¶</a></h2>
+<p>pydsol-core is used to schedule events in the discrete event simulation models. To use pydsol-model, it is necessary to understand
+how to schedule such an event on the pydsol-core simulators for understanding and developing models.</p>
+<p>Two ways of scheduling events that are used are (1) scheduling an event <strong>now</strong>, and (2) scheduling an event with a <strong>relative delay</strong>.</p>
+<p>To schedule an event <strong>now</strong>, use:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">simulator</span><span class="o">.</span><span class="n">schedule_event_now</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>where <em>target</em> is the model object or station to schedule the event on, and <em>method</em> is the name of the event method (in string.</p>
+<p>For example, a model has a server called <em>server_1</em> with various methods including <em>do_something</em>. Then, you have to schedule an
+event as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">simulator</span><span class="o">.</span><span class="n">schedule_event_now</span><span class="p">(</span><span class="n">server_1</span><span class="p">,</span> <span class="s2">&quot;do_something&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This holds for every entity flowing through the model.</p>
+<p>To schedule an event with a <strong>relative delay</strong>, use:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">simulator</span><span class="o">.</span><span class="n">schedule_event_rel</span><span class="p">(</span><span class="n">relative_delay</span><span class="p">,</span> <span class="n">target</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>where relative delay is the amount of time until the event is scheduled relative to the current simulation time. For example, event
+<em>do_something</em> has to be scheduled in 1.5 minutes. The simulation time is 1.0 minute. So the event should be scheduled at 2.5 minutes, or
+you can use the relative delay function as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">simulator</span><span class="o">.</span><span class="n">schedule_event_rel</span><span class="p">(</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">server_1</span><span class="p">,</span> <span class="s2">&quot;do_something&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>More documentation on pydsol-core can be found at <a class="reference external" href="https://pydsol-core.readthedocs.io/en/latest/index.html">Read the Docs</a> or
+<a class="reference external" href="https://github.com/averbraeck/pydsol-core">Source Code</a>.</p>
+</section>
 </section>
 
 
