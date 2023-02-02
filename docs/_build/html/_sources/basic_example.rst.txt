@@ -231,5 +231,3 @@ This is combined with all the other customizations and extensions, and gives the
         replication = SingleReplication("rep1", 0.0, 0.0, 100)
         simulator.initialize(model, replication)
         simulator.start()
-
-
