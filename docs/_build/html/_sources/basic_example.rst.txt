@@ -1,5 +1,5 @@
 ========================
-Basic Examples
+Basic Example
 ========================
 
 This is a step-by-step tutorial on how to develop a basic discrete event simulation model using pydsol-model.
