@@ -1,5 +1,5 @@
 ==============================
-Advanced Examples
+Advanced Example
 ==============================
 
 This is a step-by-step tutorial on how to develop and experiment with a advanced discrete event simulation model using pydsol-model.
