@@ -253,7 +253,7 @@ if __name__ == "__main__":
     for rep in range(NUM_REPLICATIONS):
         simulator = DEVSSimulatorFloat("sim")
         model = AdvancedExampleModel(simulator, INPUT_PARAMS, seed=rep)
-        replication = SingleReplication("rep1", 0.0, 0.0, RUN_TIME)
+        replication = SingleReplication(str(rep), 0.0, 0.0, RUN_TIME)
         simulator.initialize(model, replication)
         simulator.start()
 

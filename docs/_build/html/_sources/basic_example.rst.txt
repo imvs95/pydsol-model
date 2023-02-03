@@ -189,7 +189,7 @@ to the Source object like:
                     link_2.next = sink
 
 Another example to extend the basic simulation model is to add another link from the source to the server.
-This is combined with all the other customizations and extensions, and gives the code as below. This code is  also available at ``./examples/extended_basic_example.py``.
+This is combined with all the other customizations and extensions, and gives the code as below. This code is  also available at ``./examples/basic_example_extended.py``.
 ::
     from pydsol.core.experiment import SingleReplication
     from pydsol.core.model import DSOLModel

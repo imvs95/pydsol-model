@@ -97,6 +97,7 @@
 <li class="toctree-l1"><a class="reference internal" href="basic_example.html">Basic Examples</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Advanced Examples</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#step-by-step-tutorial">Step-by-Step Tutorial</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#extensions">Extensions</a></li>
 </ul>
 </li>
 </ul>
@@ -172,10 +173,369 @@
             
   <section id="advanced-examples">
 <h1>Advanced Examples<a class="headerlink" href="#advanced-examples" title="Permalink to this heading">¶</a></h1>
-<p>This is a step-by-step tutorial on how to develop a advanced discrete event simulation model using pydsol-model.
+<p>This is a step-by-step tutorial on how to develop and experiment with a advanced discrete event simulation model using pydsol-model.
 Example can be found at <code class="docutils literal notranslate"><span class="pre">./examples/advanced_example.py</span></code>.</p>
 <section id="step-by-step-tutorial">
 <h2>Step-by-Step Tutorial<a class="headerlink" href="#step-by-step-tutorial" title="Permalink to this heading">¶</a></h2>
+<p>We want to create an advanced discrete event simulation model of a stylized real-world shoes supply chain, and run experiments
+with this model. A batch of shoes is made by the supplier, then transported over land by truck to the export port. This batch
+is processed by the export port, and put on a container ship to the import port. The import port
+loads the batch of shoes off the ship and processes it. Next, the batch of shoes is transported over land
+to the warehouse. The warehouse divides the batch of shoes into smaller batches to transport (via truck)
+to the three retailers. The batch of shoes is equally divided over the retailers in City A, B and C.
+We define the interarrival time of the batch of shoes as input arrival time of 1.5, meaning that
+approximately every 1.5 days a new batch of shoes is created by the supplier. Other parameters are
+defined in the code itself, and are based on a data of a real-world fashion supply chain.
+The runtime of the model is 364 days (1 year) and we run it for 10 replication for an experiment. As output statistic,
+the average time of a batch of shoes in the model, and the quantity of shoes in the batch is chosen.
+The units used in the model are kilometers and days. See a conceptualization of the shoe supply chain in the figure below.</p>
+<a class="reference internal image-reference" href="_images/figure_2_advanced_example.jpg"><img alt="alternate text" class="align-center" src="_images/figure_2_advanced_example.jpg" style="width: 600px; height: 250px;" /></a>
+<p>First, import the following statements. Set logger level to DEBUG to inspect the entities
+and model objects. For experiments, the advice is to set logger level to INFO.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">statistics</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="kn">from</span> <span class="nn">pydsol.core.experiment</span> <span class="kn">import</span> <span class="n">SingleReplication</span>
+<span class="kn">from</span> <span class="nn">pydsol.core.model</span> <span class="kn">import</span> <span class="n">DSOLModel</span>
+<span class="kn">from</span> <span class="nn">pydsol.core.simulator</span> <span class="kn">import</span> <span class="n">DEVSSimulatorFloat</span>
+
+<span class="kn">from</span> <span class="nn">pydsol.model.entities</span> <span class="kn">import</span> <span class="n">Entity</span><span class="p">,</span> <span class="n">Vehicle</span>
+<span class="kn">from</span> <span class="nn">pydsol.model.source</span> <span class="kn">import</span> <span class="n">Source</span>
+<span class="kn">from</span> <span class="nn">pydsol.model.server</span> <span class="kn">import</span> <span class="n">Server</span>
+<span class="kn">from</span> <span class="nn">pydsol.model.sink</span> <span class="kn">import</span> <span class="n">Sink</span>
+<span class="kn">from</span> <span class="nn">pydsol.model.link</span> <span class="kn">import</span> <span class="n">Link</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">pydsol.model.basic_logger</span> <span class="kn">import</span> <span class="n">get_module_logger</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">get_module_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>We start with creating the item of interest for this simulation, i.e., the entity.
+For this model, we are interested in <strong>batches of shoes</strong> - a fashion item that is regularly used
+and distributed internationally. Thus, we create an child of the type <code class="docutils literal notranslate"><span class="pre">Entity</span></code> called ShoeBatch.
+A shoe batch has the attribute <em>quantity</em>, meaning the amount of shoes that are in that batch. Also,
+we want to keep track of the amount of time this batch spend in the system using the attribute
+<em>time_in_system</em>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">ShoeBatch</span><span class="p">(</span><span class="n">Entity</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simulator</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">simulator</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">quantity</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">150</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">start_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">simulator_time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time_in_system</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span>
+</pre></div>
+</div>
+<p>This shoe batch is transported from origin to destination over land using a <strong>truck</strong>. This Truck inherits
+the class <code class="docutils literal notranslate"><span class="pre">Vehicle</span></code>. The default speed of the truck is a Triangular distribution with minimum of 0 km/h, mode of 100 km/h,
+and maximum of 120 km/h. Also, the truck is not always immediately available and therefore, a interarrival
+time is defined. This interarrival time determines the possible delay of the truck for picking up
+the batch of shoes.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Truck</span><span class="p">(</span><span class="n">Vehicle</span><span class="p">):</span>
+<span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simulator</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">triangular</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">120</span><span class="p">)</span> <span class="o">*</span> <span class="mi">24</span>  <span class="c1"># km/h to day</span>
+    <span class="k">if</span> <span class="s2">&quot;vehicle_speed&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">triangular</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;vehicle_speed&quot;</span><span class="p">],</span> <span class="mi">120</span><span class="p">)</span> <span class="o">*</span> <span class="mi">24</span>
+    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">simulator</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">speed</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">interarrival_distribution</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">triangular</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">interarrival_times</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This shoe batch is transported from origin to destination over sea using a <strong>container ship</strong>. Similar to the Truck, this
+ContainerShip inherits the class <code class="docutils literal notranslate"><span class="pre">Vehicle</span></code>. The default speed of the truck is a Triangular distribution with minimum of 10 km/h, mode of 18 km/h,
+and maximum of 25 km/h. Also, the container ship is not always immediately available and therefore, a interarrival
+time is defined. This interarrival time determines the possible delay of the container ship for picking up
+the batch of shoes at the ports.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">ContainerShip</span><span class="p">(</span><span class="n">Vehicle</span><span class="p">):</span>
+<span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simulator</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="c1"># km/h to knots, and one knot is one nautical mile per hour</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">triangular</span><span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="mf">1.85</span><span class="p">,</span> <span class="mi">18</span> <span class="o">*</span> <span class="mf">1.85</span><span class="p">,</span> <span class="mi">25</span> <span class="o">*</span> <span class="mf">1.85</span><span class="p">)</span>
+    <span class="k">if</span> <span class="s2">&quot;vehicle_speed&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">speed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">triangular</span><span class="p">(</span><span class="mi">10</span> <span class="o">*</span> <span class="mf">1.85</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;vehicle_speed&quot;</span><span class="p">],</span> <span class="mi">25</span> <span class="o">*</span> <span class="mf">1.85</span><span class="p">)</span>
+    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">simulator</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">speed</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">interarrival_distribution</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">triangular</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">interarrival_times</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">14</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Supplier</strong> is where the batches of shoes are created, so this is the <code class="docutils literal notranslate"><span class="pre">Source</span></code>. To ensure output on
+the quantity of the batches of shoes, we set the attribute <em>list_quantity</em> where the quantity
+of the created entities are added in <code class="docutils literal notranslate"><span class="pre">def</span> <span class="pre">exit_source</span></code>. To add the interarrival delay of the Truck
+we schedule an additional event that is only triggered after the interarrival delay time: <code class="docutils literal notranslate"><span class="pre">def</span> <span class="pre">exit_with_vehicle</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Supplier</span><span class="p">(</span><span class="n">Source</span><span class="p">):</span>
+<span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simulator</span><span class="p">,</span> <span class="n">interarrival_time</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">simulator</span><span class="p">,</span> <span class="n">interarrival_time</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">list_quantity</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">def</span> <span class="nf">exit_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">:</span> <span class="n">ShoeBatch</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="c1"># Tally quantity</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">list_quantity</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entity</span><span class="o">.</span><span class="n">quantity</span><span class="p">)</span>
+    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">exit_source</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">exit_output_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">:</span> <span class="n">Truck</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="c1"># Add interarrival delay of Truck</span>
+    <span class="n">interarrival_delay</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">interarrival_distribution</span><span class="p">(</span><span class="o">*</span><span class="n">entity</span><span class="o">.</span><span class="n">interarrival_times</span><span class="p">)</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">schedule_event_rel</span><span class="p">(</span><span class="n">interarrival_delay</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;exit_with_vehicle&quot;</span><span class="p">,</span> <span class="n">entity</span><span class="o">=</span><span class="n">entity</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">exit_with_vehicle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">exit_output_node</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For both export port and import port, the class <strong>Port</strong> (a child of class <code class="docutils literal notranslate"><span class="pre">Server</span></code>) is defined. The class
+Port is used for two ports, so we add the attribute <em>location</em> to it for trackability. Similar to the
+Supplier, we also add the interarrival delay of the vehicles to the Port. For the export port, this entails
+the ContainerShip and for the import port, this entails the Truck.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Port</span><span class="p">(</span><span class="n">Server</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simulator</span><span class="p">,</span> <span class="n">processing_time</span><span class="p">,</span> <span class="n">capacity</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">triangular</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">simulator</span><span class="p">,</span> <span class="n">capacity</span><span class="o">=</span><span class="n">capacity</span><span class="p">,</span> <span class="n">distribution</span><span class="o">=</span><span class="n">distribution</span><span class="p">,</span> <span class="n">processing_time</span><span class="o">=</span><span class="n">processing_time</span><span class="p">,</span>
+                         <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">location</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;location&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">location</span>
+
+    <span class="k">def</span> <span class="nf">exit_output_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">:</span> <span class="p">[</span><span class="n">Truck</span><span class="p">,</span> <span class="n">ContainerShip</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># Add interarrival delay</span>
+        <span class="n">interarrival_delay</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">interarrival_distribution</span><span class="p">(</span><span class="o">*</span><span class="n">entity</span><span class="o">.</span><span class="n">interarrival_times</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">schedule_event_rel</span><span class="p">(</span><span class="n">interarrival_delay</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;exit_with_vehicle&quot;</span><span class="p">,</span> <span class="n">entity</span><span class="o">=</span><span class="n">entity</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">exit_with_vehicle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">:</span> <span class="p">[</span><span class="n">Truck</span><span class="p">,</span> <span class="n">ContainerShip</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="s2">&quot;Time </span><span class="si">{0:.2f}</span><span class="s2">: </span><span class="si">{1}</span><span class="s2"> exits </span><span class="si">{2}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">simulator_time</span><span class="p">,</span> <span class="n">entity</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">exit_output_node</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Next, the class <strong>Warehouse</strong> is defined that inherits properties for the processing station <code class="docutils literal notranslate"><span class="pre">Server</span></code>.
+To divide the batch of shoes into smaller batches, a certain processing time is needed. Each resource
+in the Server needs to get a new <code class="docutils literal notranslate"><span class="pre">def</span> <span class="pre">processing</span></code> function, since the division of the batch of shoes
+happens there. Since each smaller batch of shoes requires the same processing time, we do want to
+keep the original processing function of the resources using <code class="docutils literal notranslate"><span class="pre">self.processing_function_resource</span></code>.
+In <code class="docutils literal notranslate"><span class="pre">def</span> <span class="pre">processing</span></code>, we divide the batch of shoes into three equally distributed smaller batches using
+the static method <code class="docutils literal notranslate"><span class="pre">divide_entity</span></code>. This return a list of smaller batches, and this “new” entity
+is processed by the resource. When entering the output node of the server (<code class="docutils literal notranslate"><span class="pre">def</span> <span class="pre">enter_output_node</span></code>), each of the smaller batches
+are transported to the three retailers. The batches are transported using a Truck with a certain
+interarrival delay.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Warehouse</span><span class="p">(</span><span class="n">Server</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simulator</span><span class="p">,</span> <span class="n">processing_time</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">simulator</span><span class="p">,</span> <span class="n">processing_time</span><span class="o">=</span><span class="n">processing_time</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c1"># Override function processing - Resource</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">processing_function_resource</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">processing</span>
+        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="p">:</span>
+            <span class="n">resource</span><span class="o">.</span><span class="n">processing</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">processing</span>
+
+    <span class="k">def</span> <span class="nf">enter_resource</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Schedules the event to transfer into the resource and starts processing.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        entity: object</span>
+<span class="sd">            the target on which a state change is scheduled.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">schedule_event_rel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transfer_in_time</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;processing&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">processing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># This only works if you have one resource, i.e., one warehouse</span>
+        <span class="k">for</span> <span class="n">resource</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">resources</span><span class="p">:</span>
+            <span class="n">entity</span> <span class="o">=</span> <span class="n">resource</span><span class="o">.</span><span class="n">processing_entity</span>
+        <span class="k">if</span> <span class="s2">&quot;divide_quantity&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">:</span>
+            <span class="n">batches_product</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">divide_entity</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;divide_quantity&quot;</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">processing_function_resource</span><span class="p">(</span><span class="n">processing_entity</span><span class="o">=</span><span class="n">batches_product</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">divide_entity</span><span class="p">(</span><span class="n">entity</span><span class="p">:</span> <span class="n">ShoeBatch</span><span class="p">,</span> <span class="n">copy_quantity</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="n">copies</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">copy_quantity</span><span class="p">):</span>
+            <span class="n">copy_entity</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+            <span class="n">copy_entity</span><span class="o">.</span><span class="n">quantity</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">quantity</span> <span class="o">/</span> <span class="n">copy_quantity</span>
+            <span class="n">copy_entity</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;.&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="n">copies</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">copy_entity</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">copies</span>
+
+    <span class="k">def</span> <span class="nf">enter_output_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># List of products due to dividing</span>
+        <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">entity</span><span class="p">:</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">enter_output_node</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">exit_output_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">:</span> <span class="n">Truck</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># Add interarrival delay of Truck</span>
+        <span class="n">interarrival_delay</span> <span class="o">=</span> <span class="n">entity</span><span class="o">.</span><span class="n">interarrival_distribution</span><span class="p">(</span><span class="o">*</span><span class="n">entity</span><span class="o">.</span><span class="n">interarrival_times</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">schedule_event_rel</span><span class="p">(</span><span class="n">interarrival_delay</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;exit_with_vehicle&quot;</span><span class="p">,</span> <span class="n">entity</span><span class="o">=</span><span class="n">entity</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">exit_with_vehicle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">exit_output_node</span><span class="p">(</span><span class="n">entity</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The smaller batches of shoes arrive at the <strong>Retailer</strong>, the final station of the stylized shoe supply chain model.
+Thus, the Retailer inherits the properties of the <code class="docutils literal notranslate"><span class="pre">Sink</span></code>. The attribute <em>location</em> is added again
+for trackabilty reasons as more than 1 retailer is present. Another attribute is the <em>entities_of_system</em>,
+a list of each entity in the system. Before destroying the entity ShoeBatch, we calculate
+the time in system and add the entity to this list for getting output statistics.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Retailer</span><span class="p">(</span><span class="n">Sink</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simulator</span><span class="p">,</span> <span class="n">transfer_in_time</span><span class="p">:</span> <span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">simulator</span><span class="p">,</span> <span class="n">transfer_in_time</span><span class="o">=</span><span class="n">transfer_in_time</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">location</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;location&#39;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">location</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">entities_of_system</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">destroy_entity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entity</span><span class="p">:</span> <span class="n">Truck</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">product</span> <span class="ow">in</span> <span class="n">entity</span><span class="o">.</span><span class="n">entities_on_vehicle</span><span class="p">:</span>
+            <span class="n">product</span><span class="o">.</span><span class="n">time_in_system</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">simulator_time</span> <span class="o">-</span> <span class="n">product</span><span class="o">.</span><span class="n">start_time</span>
+            <span class="c1"># Add value to list</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">entities_of_system</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">product</span><span class="p">)</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">destroy_entity</span><span class="p">(</span><span class="n">product</span><span class="p">)</span>
+        <span class="k">del</span> <span class="n">entity</span>
+</pre></div>
+</div>
+<p>Now we have all the model components to develop our shoe supply chain discrete event simulation model.
+The first step to develop the simulation is to define the <code class="docutils literal notranslate"><span class="pre">DSOLModel</span></code> using a child class called
+<strong>AdvancedExampleModel</strong>. The additional inputs are the input parameters using <em>input_params</em>, and the
+<em>seed</em> for reproducibility. Other attributes are for getting the output statistics: the <em>supplier</em> and <em>retailers</em>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">AdvancedExampleModel</span><span class="p">(</span><span class="n">DSOLModel</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simulator</span><span class="p">,</span> <span class="n">input_params</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">simulator</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_params</span> <span class="o">=</span> <span class="n">input_params</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">seed</span> <span class="o">=</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;seed&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;seed&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="k">else</span> <span class="mi">1</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">supplier</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">retailers</span> <span class="o">=</span> <span class="p">[]</span>
+</pre></div>
+</div>
+<p>The second step is to <strong>construct the simulation model</strong>. First, we reset the model classes for getting
+the correct <em>id</em> numbers. Then, we set the seed using numpy. Following, for each model components, we create an instance with the different (processing) times, entity types, vehicle
+types, following the conceptualization and parametrization of our supply chain. Next, the links including the link distances
+are created. Based on our conceptualization, we define the structure of the model using <em>next</em>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">construct_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+
+    <span class="bp">self</span><span class="o">.</span><span class="n">reset_model</span><span class="p">()</span>
+
+    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">seed</span><span class="p">)</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Replication starts...&quot;</span><span class="p">)</span>
+    <span class="c1"># Create model</span>
+    <span class="n">supplier</span> <span class="o">=</span> <span class="n">Supplier</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">interarrival_time</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">input_params</span><span class="p">[</span><span class="s2">&quot;interarrival_time&quot;</span><span class="p">],</span>
+                        <span class="n">entity_type</span><span class="o">=</span><span class="n">ShoeBatch</span><span class="p">,</span> <span class="n">vehicle_type</span><span class="o">=</span><span class="n">Truck</span><span class="p">)</span>
+    <span class="n">export_port</span> <span class="o">=</span> <span class="n">Port</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">processing_time</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">vehicle_type</span><span class="o">=</span><span class="n">ContainerShip</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="s2">&quot;Export O&quot;</span><span class="p">)</span>
+    <span class="n">import_port</span> <span class="o">=</span> <span class="n">Port</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">processing_time</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">vehicle_type</span><span class="o">=</span><span class="n">Truck</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="s2">&quot;Import D&quot;</span><span class="p">)</span>
+    <span class="n">warehouse</span> <span class="o">=</span> <span class="n">Warehouse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">processing_time</span><span class="o">=</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">vehicle_type</span><span class="o">=</span><span class="n">Truck</span><span class="p">,</span> <span class="n">divide_quantity</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">retailer_1</span> <span class="o">=</span> <span class="n">Retailer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">transfer_in_time</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="s2">&quot;City A&quot;</span><span class="p">)</span>
+    <span class="n">retailer_2</span> <span class="o">=</span> <span class="n">Retailer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">transfer_in_time</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="s2">&quot;City B&quot;</span><span class="p">)</span>
+    <span class="n">retailer_3</span> <span class="o">=</span> <span class="n">Retailer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">transfer_in_time</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">location</span><span class="o">=</span><span class="s2">&quot;City C&quot;</span><span class="p">)</span>
+
+    <span class="n">link_1</span> <span class="o">=</span> <span class="n">Link</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">supplier</span><span class="p">,</span> <span class="n">export_port</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>
+    <span class="n">link_2</span> <span class="o">=</span> <span class="n">Link</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">export_port</span><span class="p">,</span> <span class="n">import_port</span><span class="p">,</span> <span class="mi">2000</span><span class="p">)</span>
+    <span class="n">link_3</span> <span class="o">=</span> <span class="n">Link</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">import_port</span><span class="p">,</span> <span class="n">warehouse</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+    <span class="n">link_4</span> <span class="o">=</span> <span class="n">Link</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">warehouse</span><span class="p">,</span> <span class="n">retailer_1</span><span class="p">,</span> <span class="mi">55</span><span class="p">)</span>
+    <span class="n">link_5</span> <span class="o">=</span> <span class="n">Link</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">warehouse</span><span class="p">,</span> <span class="n">retailer_2</span><span class="p">,</span> <span class="mi">83</span><span class="p">)</span>
+    <span class="n">link_6</span> <span class="o">=</span> <span class="n">Link</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="p">,</span> <span class="n">warehouse</span><span class="p">,</span> <span class="n">retailer_3</span><span class="p">,</span> <span class="mi">22</span><span class="p">)</span>
+
+    <span class="c1"># Set structure</span>
+    <span class="n">supplier</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">link_1</span>
+    <span class="n">link_1</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">export_port</span>
+    <span class="n">export_port</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">link_2</span>
+    <span class="n">link_2</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">import_port</span>
+    <span class="n">import_port</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">link_3</span>
+    <span class="n">link_3</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">warehouse</span>
+    <span class="n">warehouse</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="p">[</span><span class="n">link_4</span><span class="p">,</span> <span class="n">link_5</span><span class="p">,</span> <span class="n">link_6</span><span class="p">]</span>
+    <span class="n">link_4</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">retailer_1</span>
+    <span class="n">link_5</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">retailer_2</span>
+    <span class="n">link_6</span><span class="o">.</span><span class="n">next</span> <span class="o">=</span> <span class="n">retailer_3</span>
+
+    <span class="c1"># For statistics</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">supplier</span> <span class="o">=</span> <span class="n">supplier</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">retailers</span> <span class="o">=</span> <span class="p">[</span><span class="n">retailer_1</span><span class="p">,</span> <span class="n">retailer_2</span><span class="p">,</span> <span class="n">retailer_3</span><span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">reset_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="n">classes</span> <span class="o">=</span> <span class="p">[</span><span class="n">ShoeBatch</span><span class="p">,</span> <span class="n">Supplier</span><span class="p">,</span>
+               <span class="n">Port</span><span class="p">,</span> <span class="n">Warehouse</span><span class="p">,</span> <span class="n">Retailer</span><span class="p">,</span>
+               <span class="n">Link</span><span class="p">,</span> <span class="n">Truck</span><span class="p">,</span> <span class="n">ContainerShip</span><span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">classes</span><span class="p">:</span>
+        <span class="n">i</span><span class="o">.</span><span class="n">id_iter</span> <span class="o">=</span> <span class="n">itertools</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The third step is to define the output statistics using <code class="docutils literal notranslate"><span class="pre">def</span> <span class="pre">get_output_statics</span></code>. We calculate
+the average time in system for each batch of shoe, and the average quantity of each batch of shoe
+using the lists of the supplier and retailers. The outcomes are presented in a dictionary.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">get_output_statistics</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="c1"># Average Time in System</span>
+    <span class="n">average_product_time_in_system</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">retailer</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">retailers</span><span class="p">:</span>
+        <span class="n">average_product_time_in_system</span> <span class="o">+=</span> <span class="p">[</span><span class="n">product</span><span class="o">.</span><span class="n">time_in_system</span> <span class="k">for</span> <span class="n">product</span> <span class="ow">in</span> <span class="n">retailer</span><span class="o">.</span><span class="n">entities_of_system</span><span class="p">]</span>
+
+    <span class="c1"># Average quantity of the shoe batch</span>
+    <span class="n">average_quantity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">supplier</span><span class="o">.</span><span class="n">list_quantity</span>
+
+    <span class="n">outcomes</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Time_In_System&quot;</span><span class="p">:</span> <span class="n">statistics</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">average_product_time_in_system</span><span class="p">),</span>
+                <span class="s2">&quot;Quantity&quot;</span><span class="p">:</span> <span class="n">statistics</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">average_quantity</span><span class="p">)}</span>
+
+    <span class="k">return</span> <span class="n">outcomes</span>
+</pre></div>
+</div>
+<p>The simulation model is now ready to be ran. The input parameters are defined first: we want 10 replications of 364 days,
+with an interarrival time of 1.5 days. For each replication in the experiment, we create a new instance
+of the <code class="docutils literal notranslate"><span class="pre">AdvancedExampleModel</span></code> with a different seed. This seed is based on the number of that replication.
+To get the output statistics, we have to ensure that the simulation model ran to the run time.
+<code class="docutils literal notranslate"><span class="pre">pydsol-core</span></code> works with different Threads, so it requires an extra <code class="docutils literal notranslate"><span class="pre">while</span></code> loop. The results
+of each replication are added to a dictionary, and can be used for data analysis. When all replications
+are finished, the experiment is finished and the stylized shoe supply chain can be analyzed.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="c1"># Input</span>
+    <span class="n">NUM_REPLICATIONS</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="n">RUN_TIME</span> <span class="o">=</span> <span class="mi">364</span>  <span class="c1"># days</span>
+    <span class="n">INPUT_PARAMS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;interarrival_time&quot;</span><span class="p">:</span> <span class="mf">1.5</span><span class="p">}</span>
+
+    <span class="c1"># Experiment</span>
+    <span class="n">experiment_output</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">rep</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">NUM_REPLICATIONS</span><span class="p">):</span>
+        <span class="n">simulator</span> <span class="o">=</span> <span class="n">DEVSSimulatorFloat</span><span class="p">(</span><span class="s2">&quot;sim&quot;</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">AdvancedExampleModel</span><span class="p">(</span><span class="n">simulator</span><span class="p">,</span> <span class="n">INPUT_PARAMS</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="n">rep</span><span class="p">)</span>
+        <span class="n">replication</span> <span class="o">=</span> <span class="n">SingleReplication</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">rep</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">RUN_TIME</span><span class="p">)</span>
+        <span class="n">simulator</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">replication</span><span class="p">)</span>
+        <span class="n">simulator</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+        <span class="k">while</span> <span class="n">simulator</span><span class="o">.</span><span class="n">simulator_time</span> <span class="o">&lt;</span> <span class="n">RUN_TIME</span><span class="p">:</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.01</span><span class="p">)</span>
+
+        <span class="n">experiment_output</span><span class="p">[</span><span class="n">rep</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">get_output_statistics</span><span class="p">()</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Experiment with </span><span class="si">{0}</span><span class="s2"> replications is finished&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">NUM_REPLICATIONS</span><span class="p">))</span>
+</pre></div>
+</div>
+</section>
+<section id="extensions">
+<h2>Extensions<a class="headerlink" href="#extensions" title="Permalink to this heading">¶</a></h2>
+<p>An example of extending the advanced example is to add daily statistics using a Timer. Create a Timer
+like the code below, and add the model object and the method on which you want the daily statistics.
+Timer can also be used to trigger events that happen every day/hour/any time. Relative time to set the timer is
+used as input. Every <em>time</em>, this timer reschedules this event.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">Timer</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">simulator</span><span class="p">,</span> <span class="n">time</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span> <span class="o">=</span> <span class="n">simulator</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">=</span> <span class="n">time</span>
+
+    <span class="k">def</span> <span class="nf">set_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_stats</span><span class="p">,</span> <span class="n">method_stats</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">schedule_event_now</span><span class="p">(</span><span class="n">source_stats</span><span class="p">,</span> <span class="n">method_stats</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="c1"># New event for statistics one day later</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulator</span><span class="o">.</span><span class="n">schedule_event_rel</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;set_event&quot;</span><span class="p">,</span> <span class="n">source_stats</span><span class="o">=</span><span class="n">source_stats</span><span class="p">,</span>
+                                                   <span class="n">method_stats</span><span class="o">=</span><span class="n">method_stats</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Another extension is using the package <a class="reference external" href="https://networkx.org/">networkx</a> to automatically create
+a discrete event simulation model from a graph. A (directed) graph with nodes and edges including
+attributes can easily created using <code class="docutils literal notranslate"><span class="pre">networkx</span></code>. This graph can be an input from the child class
+of <code class="docutils literal notranslate"><span class="pre">DSOLModel</span></code>, and code to automatically construct the model based on this attributes in this graph can be generated.
+If you wish to get help on this or see an example, please contact <a class="reference external" href="https://www.tudelft.nl/staff/i.m.vanschilt/?cHash=74e749835b2a89c6c76b804683ffbbcf">Isabelle van Schilt</a>.</p>
 </section>
 </section>
 
