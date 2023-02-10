@@ -14,7 +14,8 @@ pydsol-core uses a heap queue (priority queue) as eventlist and plans events usi
 This repository is currently under development at Delft University of Technology. If you would like to collaborate, please open an issue/discussion or contact `Isabelle van Schilt <https://www.tudelft.nl/staff/i.m.vanschilt/?cHash=74e749835b2a89c6c76b804683ffbbcf>`_ or `Alexander Verbraeck <https://www.tudelft.nl/staff/a.verbraeck/?cHash=79d864d800b2d588772fbe7e1778ff03>`_.
 
 
-Source code is available at https://github.com/imvs95/pydsol-model.
+Source code is available at https://github.com/imvs95/pydsol-model. To cite this repository, use https://doi.org/10.4121/22005620.
+
 
 .. toctree::
    :maxdepth: 1

@@ -4,7 +4,7 @@ Installation
 
 pydsol-model is available using pip install. It can be installed with a SSH key::
 
-  pip install git+ssh://git@github.com:imvs95/pydsol-model.git
+  pip install git+ssh://git@github.com/imvs95/pydsol-model.git
 
 
 It can also be installed with the URL::

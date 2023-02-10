@@ -9,7 +9,7 @@ import sys
 
 __all__ = ["get_module_logger"]
 
-def get_module_logger(mod_name, level=logging.INFO):
+def get_module_logger(mod_name, level=logging.CRITICAL):
     logger = logging.getLogger(mod_name)
     handler = logging.StreamHandler(stream=sys.stdout)
     msg_format = '%(asctime)s [%(levelname)s] %(message)s (%(name)s - %(filename)s: line %(lineno)s)'
