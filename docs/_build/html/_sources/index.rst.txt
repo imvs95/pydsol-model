@@ -6,7 +6,7 @@
 pydsol-model documentation
 ========================================
 
-**pydsol-model** is a package that includes standard model objects suitable for developing a discrete event simulation model. Standard model objects are source, server using resources, sink, node, link, entity and vehicle. This makes it easy and fast to design discrete event simulation models using queueing theory, useful for teaching, academic research, and commerical use. You can use the standard model objects as is, or use it to make your own objects for more complex simulation models.
+**pydsol-model** is a package that includes standard model objects suitable for developing a discrete event simulation model. Standard model objects are source, server using resources, sink, node, link, entity and vehicle. This makes it easy and fast to design discrete event simulation models using queueing theory, useful for teaching, academic research, and commercial use. You can use the standard model objects as is, or use it to make your own objects for more complex simulation models.
 
 **pydsol-model** is an additional layer on top of pydsol-core, a Python distribution discrete event simulation library based on PhD thesis of `Jacobs (2005) <http://resolver.tudelft.nl/uuid:4c5586e2-85a8-4e02-9b50-7c6311ed1278>`_ and the exact simulation formulation of `Zeigler et al. (2000) <https://dl.acm.org/doi/10.5555/580780>`_.
 pydsol-core uses a heap queue (priority queue) as eventlist and plans events using a relative delay instead of yield, making it much faster than most discrete event simulation packages implemented in Python. Note that you need pydsol-core (https://github.com/averbraeck/pydsol-core) to use **pydsol-model**.
