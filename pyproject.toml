@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pydsol-model"
-version = "1.0.1"
+version = "1.0.0"
 description = "Predefined objects library for a Python discrete-event simulation model (pydsol-core)"
 readme = "README.rst"
 authors = [{ name = "Isabelle van Schilt", email = "isabellevanschilt@gmail.com" }]
