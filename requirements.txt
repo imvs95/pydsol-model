@@ -1,4 +1,2 @@
 numpy>=1.21.5
-pytest
-pytest-mock
 pydsol-core

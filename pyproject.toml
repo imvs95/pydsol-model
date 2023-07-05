@@ -18,9 +18,9 @@ classifiers = [
     "Programming Language :: Python :: 3",
 ]
 keywords = ["simulation", "discrete-event", "model"]
-dependencies = [
+dependencies = [ "pydsol-core", "numpy"
 ]
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 
 [tool.pytest.ini_options]
 addopts = [
