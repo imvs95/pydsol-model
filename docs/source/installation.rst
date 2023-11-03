@@ -2,10 +2,14 @@
 Installation
 ===============
 
-pydsol-model is available using pip install. It can be installed with the URL::
+``pydsol-model`` is available using pip install::
 
- pip install git+https://github.com/imvs95/pydsol-model.git
+    pip install pydsol-model
 
+
+For the latest version, please use the URL::
+
+    pip install git+https://github.com/imvs95/pydsol-model.git
 
 For setting up pydsol-model and ensuring that the example models can run, ``pydsol-core`` also needs to be installed. This is part of the ``requirements.txt``.
 If you want to install it manually, use::
